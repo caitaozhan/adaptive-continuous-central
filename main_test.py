@@ -236,7 +236,6 @@ def app_2_node_linear_adaptive(verbose=False):
         print(f'throughput = {throughput:.2f}, reservation = {reservation}')
 
 
-
 # the request app, testing on a five node linear network
 def app_5_node_linear_adaptive(verbose=False):
 
@@ -431,15 +430,18 @@ def app_10_node_bottleneck_request_queue():
         for reservation, throughput in request_to_throughput.items():
             print(f'throughput = {throughput:.2f}, reservation = {reservation}')
 
+####################
 
-
-# the request type-2 app, testing on a two node linear network, for time-to-serve
+# the request type-2 (time-to-serve) app, testing on a two node linear network, for time-to-serve
 def app_2_node_line_request2_queue():
+
+    REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
+    DELTA = 0.02         # seconds, time for EP pre-generation
 
     purify = True
     strategy = 'freshest'
-    log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
-    # log_filename = 'log/queue_tts/line2,qmem=0,update=false'
+    # log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
+    log_filename = 'log/tmp/line2,qmem=0,update=false'
     
     network_config = 'config/line_2.json'
 
@@ -468,7 +470,8 @@ def app_2_node_line_request2_queue():
     num_nodes = len(name_to_apps)
     traffic_matrix = TrafficMatrix(num_nodes)
     traffic_matrix.line_2()
-    request_queue = traffic_matrix.get_request_queue_tts(request_period=1, end_time=100, memo_size=1, fidelity=0.6, entanglement_number=1)
+    request_queue = []
+    request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1)
     for request in request_queue:
         id, src_name, dst_name, start_time, end_time, memo_size, fidelity, entanglement_number = request
         app = name_to_apps[src_name]
@@ -756,11 +759,11 @@ def app_100_node_as_request2_queue():
 
 if __name__ == '__main__':
     verbose = True
-    linear_entanglement_generation(verbose)
+    # linear_entanglement_generation(verbose)
     # linear_swapping(verbose)
     # linear_adaptive(verbose)
     # app_2_node_linear_adaptive(verbose)
-    # app_2_node_line_request2_queue()
+    app_2_node_line_request2_queue()
 
     # app_5_node_linear_adaptive(verbose)
     # app_5_node_line_request2_queue()

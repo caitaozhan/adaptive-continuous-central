@@ -33,14 +33,17 @@
     },
     "nodes": [
         {
+            "name": "Controller",
+            "type": "Controller",
+            "seed": 0
+        },
+        {
             "name": "router_0",
             "type": "QuantumRouter",
             "seed": 0,
             "memo_size": 10,
             "group": 0,
-            "template": "adaptive_protocol",
-            "gate_fidelity": 0.99,
-            "measurement_fidelity": 0.99
+            "template": "adaptive_protocol"
         },
         {
             "name": "router_1",
@@ -48,9 +51,7 @@
             "seed": 1,
             "memo_size": 10,
             "group": 0,
-            "template": "adaptive_protocol",
-            "gate_fidelity": 0.99,
-            "measurement_fidelity": 0.99
+            "template": "adaptive_protocol"
         },
         {
             "name": "BSM_0_1",
@@ -106,6 +107,30 @@
         {
             "source": "router_1",
             "destination": "router_0",
+            "delay": 1000000000.0
+        },
+        {
+            "source": "Controller",
+            "destination": "router_0",
+            "distance": 10000.0,
+            "delay": 1000000000.0
+        },
+        {
+            "source": "router_0",
+            "destination": "Controller",
+            "distance": 10000.0,
+            "delay": 1000000000.0
+        },
+        {
+            "source": "Controller",
+            "destination": "router_1",
+            "distance": 10000.0,
+            "delay": 1000000000.0
+        },
+        {
+            "source": "router_1",
+            "destination": "Controller",
+            "distance": 10000.0,
             "delay": 1000000000.0
         }
     ],

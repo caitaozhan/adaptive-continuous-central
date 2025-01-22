@@ -8,7 +8,8 @@ from sequence.kernel.timeline import Timeline
 from sequence.kernel.quantum_manager import BELL_DIAGONAL_STATE_FORMALISM
 from sequence.constants import SPEED_OF_LIGHT, MICROSECOND
 
-from node import QuantumRouterAdaptive, BSMNodeAdaptive
+from node import QuantumRouterAdaptiveWorker, BSMNodeAdaptive
+from controller import Controller
 
 
 class RouterNetTopoAdaptive(RouterNetTopo):
@@ -39,7 +40,9 @@ class RouterNetTopoAdaptive(RouterNetTopo):
                 seed = node.get(self.SEED, 0)
                 gate_fidelity = node.get(self.GATE_FIDELITY, 1)
                 measurement_fidelity = node.get(self.MEASUREMENT_FIDELITY, 1)
-                node_obj = QuantumRouterAdaptive(name, self.tl, memo_size, seed, component_templates, gate_fidelity, measurement_fidelity)
+                node_obj = QuantumRouterAdaptiveWorker(name, self.tl, memo_size, seed, component_templates, gate_fidelity, measurement_fidelity)
+            elif node_type == self.CONTROLLER:
+                node_obj = Controller(name, self.tl, seed)
             else:
                 raise ValueError("Unknown type of node '{}'".format(node_type))
 
