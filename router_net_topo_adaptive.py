@@ -1,6 +1,7 @@
 '''Generate quantum network with quantum routers customized for the adaptive-continuous protocol
 '''
 
+import json
 from networkx import Graph, single_source_dijkstra, exception
 from sequence.topology.topology import Topology as Topo
 from sequence.topology.router_net_topo import RouterNetTopo
@@ -18,6 +19,28 @@ class RouterNetTopoAdaptive(RouterNetTopo):
 
     def __init__(self, conf_file_name: str):
         super().__init__(conf_file_name)
+        self.graph = None   # the graph of the network
+
+    def _load(self, filename: str):
+        '''load the config file
+        '''
+        with open(filename, 'r') as fh:
+            config = json.load(fh)
+
+        self._get_templates(config)
+        # quantum connections are only supported by sequential simulation so far
+        if not config[self.IS_PARALLEL]:
+            self._add_qconnections(config)
+        self._add_timeline(config)
+        self._map_bsm_routers(config)
+        self._add_nodes(config)
+        self._add_bsm_node_to_router()
+        self._add_qchannels(config)
+        self._add_cchannels(config)
+        self._add_cconnections(config)
+        self._generate_forwarding_table(config)
+        self._inform_controller_topology()
+
 
     def _add_nodes(self, config: dict):
         '''overrides RouterNetTopo._add_nodes()
@@ -61,7 +84,7 @@ class RouterNetTopoAdaptive(RouterNetTopo):
             config (dict): the config file
         """
 
-        all_paths = {}  # (src, dst) -> (length: float, hop: int, path: tuple)
+        all_paths = {}  # (src, dst) -> (length: float, hop: int, path: tuple), only quantum channels
 
         graph = Graph()
         for node in config[Topo.ALL_NODE]:
@@ -90,8 +113,9 @@ class RouterNetTopoAdaptive(RouterNetTopo):
                     costs[bsm] = [router] + costs[bsm]
                     costs[bsm][-1] += qc.distance
 
-
         graph.add_weighted_edges_from(costs.values())
+        self.graph = graph
+
         for src in self.nodes[self.QUANTUM_ROUTER]:
             for dst_name in graph.nodes:
                 if src.name == dst_name:
@@ -108,7 +132,7 @@ class RouterNetTopoAdaptive(RouterNetTopo):
                     
                     next_hop = path[1]
                     # routing protocol locates at the bottom of the stack
-                    routing_protocol = src.network_manager.protocol_stack[0]  # guarantee that [0] is the routing protocol?
+                    routing_protocol = src.network_manager.protocol_stack[0]  # guarantee that [0] is the routing protocol
                     routing_protocol.add_forwarding_rule(dst_name, next_hop)
                 except exception.NetworkXNoPath:
                     pass
@@ -122,9 +146,14 @@ class RouterNetTopoAdaptive(RouterNetTopo):
         for cc in self.cchannels:
             src = cc.sender.name
             dst = cc.receiver
-            length, hop_count, path = all_paths[(src, dst)]
-            cc.delay = classical_delay(length, hop_count)
-            cc.distance = length   # not important
+            if (src, dst) in all_paths: # BSM - quantum router, quantum router - quantum router
+                length, hop_count, path = all_paths[(src, dst)]
+                cc.delay = classical_delay(length, hop_count)
+                cc.distance = length   # not important
+            else:  # controller - quantum_router
+                length = cc.distance
+                hop_count = 0
+                cc.delay = classical_delay(length, hop_count)
             # print(f'{path}: {cc.delay/1e6}us')
 
     def update_stop_time(self, stop_time: int) -> None:
@@ -134,3 +163,12 @@ class RouterNetTopoAdaptive(RouterNetTopo):
             stop_time (int): time in picoseconds
         """
         self.tl.stop_time = stop_time
+
+    def _inform_controller_topology(self):
+        """Inform the controller the topology
+        """
+        if self.graph:
+            controller_list = self.nodes[self.CONTROLLER]
+            assert len(controller_list) == 1, 'There should be one and only one controller'
+            controller = controller_list[0]
+            controller.graph = self.graph
