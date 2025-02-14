@@ -18,8 +18,8 @@ class RouterNetTopoAdaptive(RouterNetTopo):
     '''
 
     def __init__(self, conf_file_name: str):
-        super().__init__(conf_file_name)
         self.graph = None   # the graph of the network
+        super().__init__(conf_file_name)
 
     def _load(self, filename: str):
         '''load the config file
@@ -51,21 +51,24 @@ class RouterNetTopoAdaptive(RouterNetTopo):
             name = node[Topo.NAME]
             template_name = node.get(Topo.TEMPLATE, None)
             component_templates = self.templates.get(template_name, {})
-            if self.encoding_type is None:
-                self.encoding_type = component_templates.get('encoding_type', 'single_atom')
-
+            
             if node_type == self.BSM_NODE:
+                if self.encoding_type is None:
+                    self.encoding_type = component_templates.get('encoding_type', 'single_atom')
                 others = self.bsm_to_router_map[name]
                 seed = node.get(self.SEED, 0)
                 node_obj = BSMNodeAdaptive(name, self.tl, others, seed, component_templates)
+            
             elif node_type == self.QUANTUM_ROUTER:
                 memo_size = node.get(self.MEMO_ARRAY_SIZE, 0)
                 seed = node.get(self.SEED, 0)
                 gate_fidelity = node.get(self.GATE_FIDELITY, 1)
                 measurement_fidelity = node.get(self.MEASUREMENT_FIDELITY, 1)
                 node_obj = QuantumRouterAdaptiveWorker(name, self.tl, memo_size, seed, component_templates, gate_fidelity, measurement_fidelity)
+            
             elif node_type == self.CONTROLLER:
                 node_obj = Controller(name, self.tl, seed)
+            
             else:
                 raise ValueError("Unknown type of node '{}'".format(node_type))
 

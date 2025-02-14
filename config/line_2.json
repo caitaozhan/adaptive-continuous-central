@@ -17,7 +17,7 @@
                     0.3333333333333333
                 ]
             },
-            "adaptive_max_memory": 0,
+            "adaptive_max_memory": 2,
             "encoding_type": "single_heralded",
             "SingleHeraldedBSM": {
                 "detectors": [

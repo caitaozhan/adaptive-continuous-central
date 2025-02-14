@@ -9,6 +9,7 @@ from collections import defaultdict
 import numpy as np
 from sequence.topology.router_net_topo import RouterNetTopo
 from sequence.constants import MILLISECOND
+from sequence.constants import SECOND
 import sequence.utils.log as log
 from request_app import RequestAppThroughput, RequestAppTimeToServe
 from router_net_topo_adaptive import RouterNetTopoAdaptive
@@ -438,10 +439,10 @@ def app_2_node_line_request2_queue():
     REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
     DELTA = 0.02         # seconds, time for EP pre-generation
 
-    purify = True
+    purify = False
     strategy = 'freshest'
     # log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
-    log_filename = 'log/tmp/line2,qmem=0,update=false'
+    log_filename = 'log/tmp/line2,qmem=2,central'
     
     network_config = 'config/line_2.json'
 
@@ -451,8 +452,9 @@ def app_2_node_line_request2_queue():
 
     log.set_logger(__name__, tl, log_filename)
     log.set_logger_level('DEBUG')
-    modules = ['adaptive_continuous', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
-    modules = ['main_test']
+    # modules = ['adaptive_continuous_central', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
+    modules = ['adaptive_continuous_central', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test',]
+    # modules = ['main_test']
     for module in modules:
         log.track_module(module)
 
@@ -465,13 +467,20 @@ def app_2_node_line_request2_queue():
         router.adaptive_continuous.has_empty_neighbor = True
         router.adaptive_continuous.update_prob = True
         router.adaptive_continuous.strategy = strategy
+        router.adaptive_continuous.update_period(REQUEST_PERIOD * SECOND)
         router.resource_manager.purify = purify
+
+    controller = None
+    for con in network_topo.get_nodes_by_type(RouterNetTopo.CONTROLLER):
+        controller = con
+        break
 
     num_nodes = len(name_to_apps)
     traffic_matrix = TrafficMatrix(num_nodes)
     traffic_matrix.line_2()
     request_queue = []
-    request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1)
+    request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, \
+                                                         start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1, controller=controller)
     for request in request_queue:
         id, src_name, dst_name, start_time, end_time, memo_size, fidelity, entanglement_number = request
         app = name_to_apps[src_name]
@@ -645,7 +654,6 @@ def app_20_node_bottleneck_request2_queue():
 
     for reservation, time_to_serve in sorted(time_to_serve_dict.items()):
         log.logger.info(f'reservation={reservation}, time to serve={time_to_serve / MILLISECOND}')
-
 
 
 # the request type-2 app, testing on a twenty node bottleneck network, for time-to-serve

@@ -5,6 +5,7 @@ from typing import Tuple, List
 from itertools import accumulate
 import random
 from bisect import bisect_left
+from controller import Controller
 
 from sequence.constants import SECOND, EPSILON
 
@@ -172,7 +173,8 @@ class TrafficMatrix:
         return request_queue
 
 
-    def get_request_queue_tts(self, request_queue: list, request_period: float, delta: float, start_time: float, end_time: float, memo_size: int, fidelity: float, entanglement_number: int, seed: int = 0) -> list:
+    def get_request_queue_tts(self, request_queue: list, request_period: float, delta: float, start_time: float, end_time: float, memo_size: int, \
+                              fidelity: float, entanglement_number: int, seed: int = 0, controller: Controller = None) -> list:
         '''get a queue of requests, each request is represented by (src, dst, start_time, end_time, memo_size, fidelity, entanglement_number)
            the request are uniformly distributed, one after another
         
@@ -183,15 +185,19 @@ class TrafficMatrix:
             request_period: the time period (in seconds) for each request
             delta: time for EP pre-generation
             start_time: the start time of the first request in the queue
-            end_time:   the end tme of the last request in the queue
+            end_time:  the end tme of the last request in the queue
             memo_size: the memory size for each request
             fidelity: the fidelity requirement for each request
             entanglement_number: the number of entanglement needed
             seed: the random seed
+            controller: the centralized controller. assume the controller knows the traffic pattern
         Return:
             a list of requests, where each request is represented by a tuple (src name, dst name, start time, end time, memory size, fidelity)
         '''
         assert delta < request_period
+
+        # imform the controller the traffix matrix, and start/end time
+        controller.add_traffic(self.matrix, start_time, end_time)
 
         src_dst_pairs, prob_list = self.matrix_to_prob_list()
         prob_accumulate = list(accumulate(prob_list))

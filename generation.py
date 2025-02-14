@@ -19,7 +19,7 @@ from sequence.resource_management.memory_manager import MemoryInfo, MemoryManage
 from sequence.kernel.quantum_manager import BELL_DIAGONAL_STATE_FORMALISM
 
 if TYPE_CHECKING:
-    from adaptive_continuous import AdaptiveContinuousProtocol
+    from adaptive_continuous_central import AdaptiveContinuousWorker
 
 
 def valid_trigger_time(trigger_time: int, target_time: int, resolution: int) -> bool:
@@ -206,7 +206,7 @@ class EntanglementGenerationAadaptive(EntanglementProtocol):
                     if self.ent_round == 1:
                         
                         if self.matched_entanglement_pair is None:                       # if not informed EP
-                            adaptive_continuous: AdaptiveContinuousProtocol = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
+                            adaptive_continuous: AdaptiveContinuousWorker = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
                             this_node_name = self.owner.name
                             remote_node_name = self.remote_node_name
                             matched_entanglement_pair = adaptive_continuous.match_generated_entanglement_pair(this_node_name, remote_node_name)
@@ -255,7 +255,7 @@ class EntanglementGenerationAadaptive(EntanglementProtocol):
                 
                 if self.from_app_request is True and self.node_send_resource_management_request is False:  # is from app request and not sent resource_management REQUEST
                     # select EP and inform to other node
-                    adaptive_continuous = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
+                    adaptive_continuous: AdaptiveContinuousWorker = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
                     this_node_name = self.owner.name
                     remote_node_name = self.remote_node_name
                     self.matched_entanglement_pair = adaptive_continuous.match_generated_entanglement_pair(this_node_name, remote_node_name)
@@ -749,7 +749,7 @@ class ShEntanglementGenerationAadaptive(EntanglementProtocol):
                     self.owner.send_message(self.remote_node_name, message)
 
                 else:                                # EGA protocol is generated from the request
-                    adaptive_continuous: AdaptiveContinuousProtocol = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
+                    adaptive_continuous: AdaptiveContinuousWorker = self.owner.adaptive_continuous         # first check if there is pre-generated entanglement pair
                     this_node_name = self.owner.name
                     remote_node_name = self.remote_node_name
                     matched_entanglement_pair = adaptive_continuous.match_generated_entanglement_pair(this_node_name, remote_node_name)

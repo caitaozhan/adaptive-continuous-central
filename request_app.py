@@ -70,7 +70,7 @@ class RequestAppThroughput(RequestApp):
             reservation: Reservation = self.memo_to_reservation[info.index]
             if info.remote_node == reservation.initiator:
                 if info.fidelity >= reservation.fidelity:   # the responder
-                    self.cache_entangled_path(reservation.path)
+                    # self.cache_entangled_path(reservation.path)
                     log.logger.info(f"{self.name}: Successfully generated entanglement. {info.fidelity:.6f}")
                     self.node.resource_manager.update(None, info.memory, "RAW")
                 else:
@@ -81,8 +81,8 @@ class RequestAppThroughput(RequestApp):
                     self.entanglement_fidelities[reservation].append(info.fidelity)
                     log.logger.info(f"{self.name}: Successfully generated entanglement. {reservation}: {len(self.entanglement_timestamps[reservation])}, {info.fidelity:.6f}")
                     self.node.resource_manager.update(None, info.memory, "RAW")
-                    self.cache_entangled_path(reservation.path)
-                    self.send_entangled_path(reservation)
+                    # self.cache_entangled_path(reservation.path)
+                    # self.send_entangled_path(reservation)
                 else:
                     log.logger.info(f'{self.name}: Successfully generated entanglement. BUT the fidelity={info.fidelity:.6f} does not meet requirement ({reservation.fidelity})')
 
@@ -201,7 +201,7 @@ class RequestAppTimeToServe(RequestApp):
                     self.entanglement_timestamps[reservation].append(self.node.timeline.now())
                     self.entanglement_fidelities[reservation].append(info.fidelity)
                     self.node.resource_manager.update(None, info.memory, MemoryInfo.RAW)
-                    self.cache_entangled_path(reservation.path)
+                    # self.cache_entangled_path(reservation.path)
                     
                     entanglement_number = len(self.entanglement_timestamps[reservation])
                     if entanglement_number == reservation.entanglement_number:
@@ -218,8 +218,8 @@ class RequestAppTimeToServe(RequestApp):
 
                     log.logger.info(f"Successfully generated entanglement. {reservation}: {entanglement_number}, {info.fidelity:.6f}")
                     self.node.resource_manager.update(None, info.memory, MemoryInfo.RAW)
-                    self.cache_entangled_path(reservation.path)
-                    self.send_entangled_path(reservation)
+                    # self.cache_entangled_path(reservation.path)
+                    # self.send_entangled_path(reservation)
 
                     if entanglement_number == reservation.entanglement_number:
                         self.time_to_serve[reservation] = self.node.timeline.now() - reservation.start_time

@@ -18,7 +18,7 @@ from sequence.resource_management.rule_manager import Rule
 from generation import EntanglementGenerationAadaptive, ShEntanglementGenerationAadaptive
 from memory_manager import MemoryManagerAdaptive
 from reservation import ReservationAdaptive
-from adaptive_continuous import AdaptiveContinuousProtocol, AdaptiveContinuousMessage, ACMsgType
+from adaptive_continuous_central import AdaptiveContinuousWorker, AdaptiveContinuousMessage, ACMsgType
 from purification import BBPSSW_bds
 
 if TYPE_CHECKING:
@@ -105,7 +105,6 @@ class ResourceManagerAdaptive(ResourceManager):
                 adaptive_continuous = self.get_adaptive_continuous_protocol()
                 entanglement_pair = ((self.owner.name, memory.name), (memory.entangled_memory['node_id'], memory.entangled_memory['memo_id']))
                 adaptive_continuous.add_generated_entanglement_pair(entanglement_pair)
-
 
         if protocol in self.owner.protocols:
             self.owner.protocols.remove(protocol)
@@ -234,7 +233,7 @@ class ResourceManagerAdaptive(ResourceManager):
         self.owner.get_idle_memory(memo_info)  # no new rules apply to this memory, thus "idle"
 
 
-    def get_adaptive_continuous_protocol(self) -> AdaptiveContinuousProtocol:
+    def get_adaptive_continuous_protocol(self) -> AdaptiveContinuousWorker:
         '''return the adaptive continuous protocol
         '''
         return self.owner.adaptive_continuous

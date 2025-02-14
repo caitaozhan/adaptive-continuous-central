@@ -29,7 +29,7 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
         adaptive_max_memory = component_templates['adaptive_max_memory']
         resource_reservation = self.network_manager.protocol_stack[-1]  # reference to the network manager's resource reservation protocol
         # self.adaptive_continuous = AdaptiveContinuousProtocol(self, adaptive_name, adaptive_max_memory, resource_reservation)
-        self.adaptive_continuous = AdaptiveContinuousWorker(self, adaptive_name, tl, adaptive_max_memory, resource_reservation)
+        self.adaptive_continuous = AdaptiveContinuousWorker(self, adaptive_name, adaptive_max_memory, resource_reservation)
         self.active = True
         self.seed = seed
 
