@@ -8,6 +8,7 @@ import numpy as np
 from sequence.topology.node import ClassicalNode
 from sequence.kernel.timeline import Timeline
 from adaptive_continuous_central import AdaptiveContinuousController
+from dqc_server import DQC_APP_Server
 
 
 class Controller(ClassicalNode):
@@ -28,9 +29,11 @@ class Controller(ClassicalNode):
         super().__init__(name, timeline)
         self.owner = self
         self.generator = np.random.default_rng(seed)
-        self.adaptive_continuous = AdaptiveContinuousController(self, f'{name}.acp')
         self.graph: Graph = None
         self.traffic = []  # a list of tuples of (matrix, start_time, end_time)
+        self.adaptive_continuous = AdaptiveContinuousController(self, f'{name}.acp')
+        self.dqc_server: DQC_APP_Server = DQC_APP_Server(self)
+        self.network_controller = None
 
     def init(self) -> None:
         """override init method

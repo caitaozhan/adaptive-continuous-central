@@ -14,7 +14,8 @@ import sequence.utils.log as log
 from request_app import RequestAppThroughput, RequestAppTimeToServe
 from router_net_topo_adaptive import RouterNetTopoAdaptive
 from traffic import TrafficMatrix
-
+from dqc_app import DQC_APP_Queue
+from controller import Controller
 
 
 # linear network topology + entanglement generation (based on 20 samples)
@@ -470,21 +471,30 @@ def app_2_node_line_request2_queue():
         router.adaptive_continuous.update_period(REQUEST_PERIOD * SECOND)
         router.resource_manager.purify = purify
 
-    controller = None
+    controller: Controller = None
     for con in network_topo.get_nodes_by_type(RouterNetTopo.CONTROLLER):
         controller = con
         break
 
-    num_nodes = len(name_to_apps)
-    traffic_matrix = TrafficMatrix(num_nodes)
-    traffic_matrix.line_2()
-    request_queue = []
-    request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, \
-                                                         start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1, controller=controller)
-    for request in request_queue:
-        id, src_name, dst_name, start_time, end_time, memo_size, fidelity, entanglement_number = request
-        app = name_to_apps[src_name]
-        app.start(dst_name, start_time, end_time, memo_size, fidelity, entanglement_number, id)
+    queue_length = 10
+    num_qubits_upper = 10
+    start_time = 0.1
+    request_period = request_period
+    dqc_app_queue = DQC_APP_Queue.generate_random_queue(length=queue_length, num_qubits_upper=num_qubits_upper, start_time=start_time, request_period=request_period)
+    controller.dqc_server.load(dqc_app_queue)
+    controller.dqc_server.generate_network_request()
+
+    # num_nodes = len(name_to_apps)
+    # traffic_matrix = TrafficMatrix(num_nodes)
+    # traffic_matrix.line_2()
+    # request_queue = []
+    # # TODO put the traffic matrix in the controller
+    # request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, \
+    #                                                      start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1, controller=controller)
+    # for request in request_queue:
+    #     id, src_name, dst_name, start_time, end_time, memo_size, fidelity, entanglement_number = request
+    #     app = name_to_apps[src_name]
+    #     app.start(dst_name, start_time, end_time, memo_size, fidelity, entanglement_number, id)
 
     tl.init()
     tl.run()

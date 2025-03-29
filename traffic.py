@@ -122,7 +122,6 @@ class TrafficMatrix:
             self.matrix[99][50]   = 1
             
 
-
     def matrix_to_prob_list(self) -> Tuple[List]:
         '''convert the traffix matrix into probability list
         '''
