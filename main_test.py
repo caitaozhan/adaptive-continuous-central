@@ -476,11 +476,12 @@ def app_2_node_line_request2_queue():
         controller = con
         break
 
+    controller.dqc_server.num_qubit_per_worker = 5
     queue_length = 10
     num_qubits_upper = 10
     start_time = 0.1
-    request_period = request_period
-    dqc_app_queue = DQC_APP_Queue.generate_random_queue(length=queue_length, num_qubits_upper=num_qubits_upper, start_time=start_time, request_period=request_period)
+    request_period = REQUEST_PERIOD
+    dqc_app_queue = DQC_APP_Queue.generate_random_queue(length=queue_length, num_qubits_upper=num_qubits_upper, start_time=start_time, app_period=request_period)
     controller.dqc_server.load(dqc_app_queue)
     controller.dqc_server.generate_network_request()
 

@@ -10,13 +10,15 @@ class DQC_APP:
     
     Attributes:
         monolithic_circuit (): the monolithic quantum circuit
-        request_time (float): the time when the application make the request in seconds
+        start_time (float): the time when the application starts (in seconds)
+        end_time (float): the time when the application ends (in seconds)
         result (): circuit result
     '''
-    def __init__(self, request_time: float):
-        self.monolithic_circuit = None          # the monolithic quantum circuit
-        self.request_time = request_time
-        self.result = None                      # circuit result
+    def __init__(self, start_time: float, end_time: float):
+        self.monolithic_circuit = None
+        self.start_time = start_time
+        self.end_time = end_time
+        self.result = None
 
     def quantum_fourier_transform(self, num_qubits: int, swapping: bool = False, to_cnot: bool = False):
         '''
@@ -32,22 +34,22 @@ class DQC_APP_Queue:
     '''About the queues for the distributed quantum computing application
     '''
     @classmethod
-    def generate_random_queue(self, length: int, num_qubits_upper: int, start_time: float, request_period: float) -> list:
+    def generate_random_queue(self, length: int, num_qubits_upper: int, start_time: float, app_period: float) -> list:
         '''generate a random queue of dqc applications
         
         Args:
             length (int): the length of the queue
             num_qubits_upper (int): the upper limit of the number of qubits
-            start_time (float): the request time of the first application
-            request_period (float): the time period (in seconds) for each application
+            start_time (float): the app time of the first application
+            app_period (float): the time period (in seconds) for each application
         '''
         queue = []
         cur_time = start_time
         for _ in range(length):
-            dqc_app = DQC_APP(cur_time)
-            num_qubits = np.random.randint(num_qubits_upper)
+            dqc_app = DQC_APP(start_time=cur_time, end_time=cur_time+app_period)
+            num_qubits = np.random.randint(2, num_qubits_upper)
             dqc_app.quantum_fourier_transform(num_qubits, swapping=False, to_cnot=False)
             queue.append(dqc_app)
-            cur_time += request_period
+            cur_time += app_period
         return queue
 

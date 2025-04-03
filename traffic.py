@@ -191,7 +191,7 @@ class TrafficMatrix:
             seed: the random seed
             controller: the centralized controller. assume the controller knows the traffic pattern
         Return:
-            a list of requests, where each request is represented by a tuple (src name, dst name, start time, end time, memory size, fidelity)
+            a list of requests, where each request is represented by a tuple (src name, dst name, start time, end time, memory size, fidelity, entanglement number)
         '''
         assert delta < request_period
 
