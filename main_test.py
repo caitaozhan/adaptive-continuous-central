@@ -452,9 +452,10 @@ def app_2_node_line_request2_queue():
     tl = network_topo.get_timeline()
 
     log.set_logger(__name__, tl, log_filename)
-    log.set_logger_level('DEBUG')
-    # modules = ['adaptive_continuous_central', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
-    modules = ['adaptive_continuous_central', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test',]
+    # log.set_logger_level('DEBUG')
+    log.set_logger_level('INFO')
+    # modules = ['adaptive_continuous_c', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
+    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test',]
     # modules = ['main_test']
     for module in modules:
         log.track_module(module)

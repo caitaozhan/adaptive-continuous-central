@@ -9,6 +9,8 @@ from collections import defaultdict
 from reservation import ReservationAdaptive
 from sequence.constants import SECOND
 from sequence.resource_management.memory_manager import MemoryInfo
+from network_controller import NetControllerMsgType
+from network_controller import NetControllerMessage
 
 if TYPE_CHECKING:
     from node import QuantumRouterAdaptive
@@ -156,6 +158,15 @@ class RequestAppTimeToServe(RequestApp):
         self.time_to_serve = defaultdict(float)           # reservation: float
         self.entanglement_fidelities = defaultdict(list)  # reservation: list[float]
     
+    def received_message(self, src: str, msg):
+        '''receive message
+        '''
+        log.logger.debug(f'{self.node.name} application receive message from {src}: {msg}')
+        if msg.msg_type is NetControllerMsgType.REQUEST:   # request from the network controller
+            request = msg.request  #  (src name, dst name, start time, end time, memory size, fidelity, entanglement number)
+            responder, start_t, end_t, memo_size, fidelity, entanglement_number = request[1], request[2], request[3], request[4], request[5], request[6]
+            self.start(responder, start_t, end_t, memo_size, fidelity, entanglement_number, msg.request_counter)
+
     def start(self, responder: str, start_t: int, end_t: int, memo_size: int, fidelity: float, entanglement_number: int = 1, id: int = 0):
         """Method to start the application.
 
@@ -197,6 +208,7 @@ class RequestAppTimeToServe(RequestApp):
         if info.index in self.memo_to_reservation:
             reservation = self.memo_to_reservation[info.index]
             if info.remote_node == reservation.initiator:
+                respond = True
                 if info.fidelity >= reservation.fidelity:   # the responder
                     self.entanglement_timestamps[reservation].append(self.node.timeline.now())
                     self.entanglement_fidelities[reservation].append(info.fidelity)
@@ -209,6 +221,11 @@ class RequestAppTimeToServe(RequestApp):
                         self.node.resource_manager.expire_rules_by_reservation(reservation)
                 else:
                     log.logger.info(f'Memory={info}, does not meet the fidelity threshold, {reservation}')
+                    respond = False
+                
+                # send message to the centralized controller
+                msg = NetControllerMessage(NetControllerMsgType.RESPOND, 'network_controller', respond=respond)
+                self.node.send_message('Controller', msg)
 
             elif info.remote_node == reservation.responder:
                 if info.fidelity >= reservation.fidelity: # the initiator

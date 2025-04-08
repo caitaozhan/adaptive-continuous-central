@@ -18,7 +18,7 @@ from sequence.resource_management.rule_manager import Rule
 from generation import EntanglementGenerationAadaptive, ShEntanglementGenerationAadaptive
 from memory_manager import MemoryManagerAdaptive
 from reservation import ReservationAdaptive
-from adaptive_continuous_central import AdaptiveContinuousWorker, AdaptiveContinuousMessage, ACMsgType
+from adaptive_continuous_c import AdaptiveContinuousWorker, AdaptiveContinuousMessage, ACMsgType
 from purification import BBPSSW_bds
 
 if TYPE_CHECKING:

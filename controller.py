@@ -7,9 +7,12 @@ from networkx.classes.graph import Graph
 import numpy as np
 from sequence.topology.node import ClassicalNode
 from sequence.kernel.timeline import Timeline
-from adaptive_continuous_central import AdaptiveContinuousController
+from adaptive_continuous_c import AdaptiveContinuousController
 from dqc_server import DQC_APP_Server
 from network_controller import NetworkController
+import sequence.utils.log as log
+from sequence.message import Message
+
 
 class Controller(ClassicalNode):
     """The centralized controller
@@ -66,3 +69,16 @@ class Controller(ClassicalNode):
             end_time (float): the end time of this traffic matrix
         """
         self.traffic.append([matrix, start_time, end_time])
+
+    def received_message(self, src: str, msg: "Message"):
+        '''detemine what to do when a message is received, based on the msg.receiver
+
+        Args:
+            src (str): name of node that sends the message
+            msg (Message): the message  
+        '''
+        log.logger.info(f'{self.name} receive message {msg} from {src}')
+        if msg.receiver == 'network_controller':
+            self.network_controller.received_message(msg)
+        else:
+            raise Exception(f'receiver {msg.receiver} not supported')

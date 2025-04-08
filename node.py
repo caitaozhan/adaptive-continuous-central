@@ -14,7 +14,7 @@ from resource_manager import ResourceManagerAdaptive
 from reservation import ResourceReservationProtocolAdaptive
 from adaptive_continuous import AdaptiveContinuousProtocol
 from generation import EntanglementGenerationBadaptive, GenerationMsgType, ShEntanglementGenerationBadaptive
-from adaptive_continuous_central import AdaptiveContinuousWorker
+from adaptive_continuous_c import AdaptiveContinuousWorker
 
 
 class QuantumRouterAdaptiveWorker(QuantumRouter):
@@ -74,6 +74,8 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
             self.resource_manager.received_message(src, msg)
         elif msg.receiver == "adaptive_continuous":
             self.adaptive_continuous.received_message(src, msg)
+        elif msg.receiver == "application":
+            self.app.received_message(src, msg)
         else:
             if msg.receiver is None:  # the msg sent by EntanglementGenerationB doesn't have a receiver (A-B not paired)
                 matching = [p for p in self.protocols if type(p) == msg.protocol_type]
