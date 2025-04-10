@@ -434,8 +434,8 @@ def app_10_node_bottleneck_request_queue():
 
 ####################
 
-# the request type-2 (time-to-serve) app, testing on a two node linear network, for time-to-serve
-def app_2_node_line_request2_queue():
+# the request type-2 (time-to-serve) app, testing on a two node linear network, for time-to-serve, distributed quantum computing
+def app_2_node_line_request2_dqc():
 
     REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
     DELTA = 0.02         # seconds, time for EP pre-generation
@@ -479,10 +479,11 @@ def app_2_node_line_request2_queue():
 
     controller.dqc_server.num_qubit_per_worker = 5
     queue_length = 10
-    num_qubits_upper = 10
+    num_qubits_lower = 6
+    num_qubits_upper = 8
     start_time = 0.1
-    request_period = REQUEST_PERIOD
-    dqc_app_queue = DQC_APP_Queue.generate_random_queue(length=queue_length, num_qubits_upper=num_qubits_upper, start_time=start_time, app_period=request_period)
+    app_period = REQUEST_PERIOD
+    dqc_app_queue = DQC_APP_Queue.generate_random_queue(queue_length, num_qubits_lower, num_qubits_upper, start_time, app_period)
     controller.dqc_server.load(dqc_app_queue)
     controller.dqc_server.generate_network_request()
 
@@ -615,6 +616,87 @@ def app_10_node_bottleneck_request2_queue():
 
     for reservation, time_to_serve in sorted(time_to_serve_dict.items()):
         log.logger.info(f'reservation={reservation}, time to serve={time_to_serve / MILLISECOND}')
+
+
+
+# the request type-2 (time-to-serve) app, testing on a 10 node random network, for time-to-serve, distributed quantum computing
+def app_10_node_random_request2_dqc():
+
+    REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
+    DELTA = 0.02         # seconds, time for EP pre-generation
+
+    purify = False
+    strategy = 'freshest'
+    # log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
+    log_filename = 'log/tmp/random10,qmem=0,central'
+    
+    network_config = 'config/random_10.json'
+
+    network_topo = RouterNetTopoAdaptive(network_config)
+    
+    tl = network_topo.get_timeline()
+
+    log.set_logger(__name__, tl, log_filename)
+    # log.set_logger_level('DEBUG')
+    log.set_logger_level('INFO')
+    # modules = ['adaptive_continuous_c', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
+    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test']
+    # modules = ['main_test']
+    for module in modules:
+        log.track_module(module)
+
+    name_to_apps = {}
+    for router in network_topo.get_nodes_by_type(RouterNetTopo.QUANTUM_ROUTER):
+        app = RequestAppTimeToServe(router)
+        name_to_apps[router.name] = app
+        # if router.name not in ['router_4', 'router_5']:
+        #     router.active = False
+        router.adaptive_continuous.has_empty_neighbor = True
+        router.adaptive_continuous.update_prob = True
+        router.adaptive_continuous.strategy = strategy
+        router.adaptive_continuous.update_period(REQUEST_PERIOD * SECOND)
+        router.resource_manager.purify = purify
+
+    controller: Controller = None
+    for con in network_topo.get_nodes_by_type(RouterNetTopo.CONTROLLER):
+        controller = con
+        break
+
+    controller.dqc_server.num_qubit_per_worker = 5
+    queue_length = 10
+    num_qubits_lower = 6
+    num_qubits_upper = 8
+    start_time = 0.1
+    app_period = REQUEST_PERIOD
+    dqc_app_queue = DQC_APP_Queue.generate_random_queue(queue_length, num_qubits_lower, num_qubits_upper, start_time, app_period)
+    controller.dqc_server.load(dqc_app_queue)
+    controller.dqc_server.generate_network_request()
+
+    # num_nodes = len(name_to_apps)
+    # traffic_matrix = TrafficMatrix(num_nodes)
+    # traffic_matrix.line_2()
+    # request_queue = []
+    # # TODO put the traffic matrix in the controller
+    # request_queue = traffic_matrix.get_request_queue_tts(request_queue=request_queue, request_period=REQUEST_PERIOD, delta=DELTA, \
+    #                                                      start_time=0, end_time=1, memo_size=1, fidelity=0.6, entanglement_number=1, controller=controller)
+    # for request in request_queue:
+    #     id, src_name, dst_name, start_time, end_time, memo_size, fidelity, entanglement_number = request
+    #     app = name_to_apps[src_name]
+    #     app.start(dst_name, start_time, end_time, memo_size, fidelity, entanglement_number, id)
+
+    tl.init()
+    tl.run()
+
+    time_to_serve_dict = defaultdict(float)
+    fidelity_dict = defaultdict(list)
+    for _, app in name_to_apps.items():
+        time_to_serve_dict |= app.time_to_serve
+        fidelity_dict |= app.entanglement_fidelities
+
+    for reservation, time_to_serve in sorted(time_to_serve_dict.items()):
+        fidelity = fidelity_dict[reservation][0]
+        log.logger.info(f'reservation={reservation}, time to serve={time_to_serve / MILLISECOND}, fidelity={fidelity:.6f}')
+
 
 
 
@@ -783,7 +865,9 @@ if __name__ == '__main__':
     # linear_swapping(verbose)
     # linear_adaptive(verbose)
     # app_2_node_linear_adaptive(verbose)
-    app_2_node_line_request2_queue()
+
+    # app_2_node_line_request2_dqc()
+    app_10_node_random_request2_dqc()
 
     # app_5_node_linear_adaptive(verbose)
     # app_5_node_line_request2_queue()

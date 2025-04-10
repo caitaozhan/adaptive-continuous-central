@@ -73,10 +73,43 @@ def create_random_waxman(area_length: int, number_nodes: int, edge_density: floa
     print(f'number of nodes = {len(V)}')
     # print(f'average link length = {int(np.average(lengths)):,}')
     print(f'# of edge = {len(graphx.edges())}, edge density = {len(graphx.edges())/max_number_edges:.4f}')
+    print(V)
+    print(E)
     return V, E
 
 
 def random_network():
+
+    # 0. templates
+    output_dict = {}
+    output_dict[Topology.ALL_TEMPLATES] = \
+        {
+            "perfect_memo": {
+                "MemoryArray": {
+                    "fidelity": 1.0,
+                    "efficiency": 1.0
+                }
+            },
+            "adaptive_protocol": {
+                "MemoryArray": {
+                    "fidelity": 0.95,
+                    "efficiency": 0.6,
+                    "coherence_time": 2,
+                    "decoherence_errors": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]
+                },
+                "adaptive_max_memory": 0,
+                "encoding_type": "single_heralded",
+                "SingleHeraldedBSM": {
+                    "detectors" :[
+                        {"efficiency": 0.95}, 
+                        {"efficiency": 0.95}
+                    ]
+                }
+            }
+        }
+
+    template = 'adaptive_protocol'
+
     # parse args
     parser = argparse.ArgumentParser()
     parser.add_argument('net_size', type=int, help='number of network nodes')
@@ -84,24 +117,22 @@ def random_network():
     args = parser.parse_args()
 
     net_size = args.net_size
-    area_length = 1000
-    edge_density = 0.8
+    area_length = args.qc_length * 1000
+    edge_density = 0.5
 
     random.seed(0)
     np.random.seed(0)
     V, E = create_random_waxman(area_length, net_size, edge_density)
 
-    output_dict = {}
-
-    # get node names, processes
+    # 1.1 generate nodes
     if args.nodes:
         node_procs = get_node_csv(args.nodes)
     else:
         node_procs = generate_node_procs(args.parallel, args.net_size, router_name_func)
     router_names = list(node_procs.keys())
-    nodes = generate_nodes(node_procs, router_names, args.memo_size)
+    nodes = generate_nodes(node_procs, router_names, args.memo_size, template)
 
-    # 1. generate quantum links and bsm nodes
+    # 1.2 generate quantum links and bsm nodes
     qchannels = []
     cchannels = []
     bsm_nodes = []
@@ -118,7 +149,8 @@ def random_network():
         bsm_node = {Topology.NAME: bsm_name,
                     Topology.TYPE: RouterNetTopo.BSM_NODE,
                     Topology.SEED: seed,
-                    RouterNetTopo.GROUP: node_procs[node1_name]}
+                    RouterNetTopo.GROUP: node_procs[node1_name],
+                    RouterNetTopo.TEMPLATE: template}
         bsm_nodes.append(bsm_node)
 
         # qchannels
@@ -144,6 +176,13 @@ def random_network():
                           Topology.DST: node2_name,
                           Topology.DELAY: args.cc_delay * 1e9})
         seed += 1
+
+    # 1.3 generate the controller node
+    controller_name = "Controller"
+    controller_node = {Topology.NAME: controller_name,
+                        Topology.TYPE: RouterNetTopo.CONTROLLER,
+                        Topology.SEED: 0}
+    nodes.insert(0, controller_node)
 
     # 2. generate classical links between all node pairs
     for i, node1_name in enumerate(router_names):
@@ -171,3 +210,5 @@ def random_network():
 
 if __name__ == '__main__':
     random_network()
+
+# python config/config_generator_random.py 10 10 0.1 0.0002 1 -d config -o random_10.json -s 10

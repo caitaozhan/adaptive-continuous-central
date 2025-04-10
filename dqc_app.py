@@ -35,11 +35,12 @@ class DQC_APP_Queue:
     '''About the queues for the distributed quantum computing application
     '''
     @classmethod
-    def generate_random_queue(self, length: int, num_qubits_upper: int, start_time: float, app_period: float) -> list:
+    def generate_random_queue(self, length: int, num_qubits_lower: int, num_qubits_upper: int, start_time: float, app_period: float) -> list:
         '''generate a random queue of dqc applications
 
         Args:
             length (int): the length of the queue
+            num_qubits_lower (int): the lower limit of the number of qubits
             num_qubits_upper (int): the upper limit of the number of qubits
             start_time (float): the app time (in seconds) of the first application
             app_period (float): the time period (in seconds) for each application
@@ -48,7 +49,7 @@ class DQC_APP_Queue:
         cur_time = start_time
         for _ in range(length):
             dqc_app = DQC_APP(start_time=cur_time * SECOND, end_time=(cur_time + app_period) * SECOND)
-            num_qubits = np.random.randint(2, num_qubits_upper)
+            num_qubits = np.random.randint(num_qubits_lower, num_qubits_upper)
             dqc_app.quantum_fourier_transform(num_qubits, swapping=False, to_cnot=False)
             queue.append(dqc_app)
             cur_time += app_period
