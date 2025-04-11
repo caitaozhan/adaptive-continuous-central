@@ -32,6 +32,7 @@ from typing import Tuple
 from sequence.utils.config_generator import add_default_args, get_node_csv, generate_node_procs, generate_nodes, final_config, router_name_func
 from sequence.topology.topology import Topology
 from sequence.topology.router_net_topo import RouterNetTopo
+from sequence.constants import MILLISECOND
 
 
 def create_random_waxman(area_length: int, number_nodes: int, edge_density: float) -> Tuple[list, list]:
@@ -73,8 +74,8 @@ def create_random_waxman(area_length: int, number_nodes: int, edge_density: floa
     print(f'number of nodes = {len(V)}')
     # print(f'average link length = {int(np.average(lengths)):,}')
     print(f'# of edge = {len(graphx.edges())}, edge density = {len(graphx.edges())/max_number_edges:.4f}')
-    print(V)
-    print(E)
+    # print(V)
+    # print(E)
     return V, E
 
 
@@ -120,8 +121,9 @@ def random_network():
     area_length = args.qc_length * 1000
     edge_density = 0.5
 
-    random.seed(0)
-    np.random.seed(0)
+    seed = 3
+    random.seed(seed)
+    np.random.seed(seed)
     V, E = create_random_waxman(area_length, net_size, edge_density)
 
     # 1.1 generate nodes
@@ -184,15 +186,28 @@ def random_network():
                         Topology.SEED: 0}
     nodes.insert(0, controller_node)
 
-    # 2. generate classical links between all node pairs
+    # 2.1 generate classical links between all node pairs
     for i, node1_name in enumerate(router_names):
         for node2_name in router_names[i+1:]:
             cchannels.append({Topology.SRC: node1_name,
                               Topology.DST: node2_name,
-                              Topology.DELAY: args.cc_delay * 1e9})
+                              Topology.DELAY: args.cc_delay * MILLISECOND})
             cchannels.append({Topology.SRC: node2_name,
                               Topology.DST: node1_name,
-                              Topology.DELAY: args.cc_delay * 1e9})
+                              Topology.DELAY: args.cc_delay * MILLISECOND})
+
+    # 2.2 generate controller-to-router classical links
+    controller2router_cchannels = []
+    for router_name in router_names:
+        controller2router_cchannels.append({Topology.SRC: controller_name,
+                                            Topology.DST: router_name,
+                                            Topology.DISTANCE: args.qc_length * 1000,
+                                            Topology.DELAY: args.cc_delay * MILLISECOND})
+        controller2router_cchannels.append({Topology.SRC: router_name,
+                                            Topology.DST: controller_name,
+                                            Topology.DISTANCE: args.qc_length * 1000,
+                                            Topology.DELAY: args.cc_delay * MILLISECOND})
+    cchannels += controller2router_cchannels
 
     nodes += bsm_nodes
     output_dict[Topology.ALL_NODE] = nodes

@@ -618,10 +618,10 @@ def app_10_node_bottleneck_request2_queue():
         log.logger.info(f'reservation={reservation}, time to serve={time_to_serve / MILLISECOND}')
 
 
-
 # the request type-2 (time-to-serve) app, testing on a 10 node random network, for time-to-serve, distributed quantum computing
 def app_10_node_random_request2_dqc():
 
+    np.random.seed(0)
     REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
     DELTA = 0.02         # seconds, time for EP pre-generation
 
@@ -662,10 +662,10 @@ def app_10_node_random_request2_dqc():
         controller = con
         break
 
-    controller.dqc_server.num_qubit_per_worker = 5
+    controller.dqc_server.num_qubit_per_worker = 3
     queue_length = 10
-    num_qubits_lower = 6
-    num_qubits_upper = 8
+    num_qubits_lower = 5
+    num_qubits_upper = 10
     start_time = 0.1
     app_period = REQUEST_PERIOD
     dqc_app_queue = DQC_APP_Queue.generate_random_queue(queue_length, num_qubits_lower, num_qubits_upper, start_time, app_period)

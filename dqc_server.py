@@ -147,6 +147,7 @@ class DQC_APP_Server:
             if gate.controls is not None:
                 if len(gate.controls) > 1 or len(gate.targets) > 1:
                     log.logger.info(f'Not 2-qubit gate: {gate}')
+                    continue
                 q1 = gate.targets[0]
                 q2 = gate.controls[0]
                 worker1 = qubit2worker[q1]
