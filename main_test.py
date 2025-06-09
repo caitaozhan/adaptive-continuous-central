@@ -622,13 +622,13 @@ def app_10_node_bottleneck_request2_queue():
 def app_10_node_random_request2_dqc():
 
     np.random.seed(0)
-    REQUEST_PERIOD = 0.1 # seconds, request incoming rate, assuming reqeust arrives one by one
+    REQUEST_PERIOD = 1 # seconds, request incoming rate, assuming reqeust arrives one by one
     DELTA = 0.02         # seconds, time for EP pre-generation
 
     purify = False
     strategy = 'freshest'
     # log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
-    log_filename = 'log/tmp/random10,qmem=0,central'
+    log_filename = 'log/tmp/random10,numqubit=14'
     
     network_config = 'config/random_10.json'
 
@@ -639,8 +639,8 @@ def app_10_node_random_request2_dqc():
     log.set_logger(__name__, tl, log_filename)
     # log.set_logger_level('DEBUG')
     log.set_logger_level('INFO')
-    # modules = ['adaptive_continuous_c', 'request_app', 'rule_manager', 'timeline', 'resource_manager', 'generation', 'main_test', 'memory', 'purification']
-    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test']
+    # modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test']
+    modules = ['main_test']
     # modules = ['main_test']
     for module in modules:
         log.track_module(module)
@@ -662,10 +662,10 @@ def app_10_node_random_request2_dqc():
         controller = con
         break
 
-    controller.dqc_server.num_qubit_per_worker = 3
+    controller.dqc_server.num_qubit_per_worker = 4
     queue_length = 10
-    num_qubits_lower = 5
-    num_qubits_upper = 10
+    num_qubits_lower = 10
+    num_qubits_upper = 11
     start_time = 0.1
     app_period = REQUEST_PERIOD
     dqc_app_queue = DQC_APP_Queue.generate_random_queue(queue_length, num_qubits_lower, num_qubits_upper, start_time, app_period)

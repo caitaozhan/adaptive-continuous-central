@@ -1,7 +1,13 @@
 .vscode
 *tmp*
 log/
-config/*.json
+# config/*.json
+config/flow*
+config/as*
+config/line*
+config/mesh*
+config/star*
+config/bottleneck*
 config/*.png
 __pycache__/
 .DS_store
