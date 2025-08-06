@@ -91,7 +91,7 @@ class DQC_APP_Server:
         return best_workers
     
     def dijkstra(self, g: AdjacencyView, start: str, num_workers: int) -> tuple:
-        '''do a dijkstra on a single node
+        '''do a dijkstra on a single node. the dijkstra is not complete, it stops at the "num_workers"-th iteration
 
         Args:
             g (AdjacencyView): the graph
@@ -153,7 +153,7 @@ class DQC_APP_Server:
                 worker1 = qubit2worker[q1]
                 worker2 = qubit2worker[q2]
                 if worker1 != worker2:
-                    counter[(worker1, worker2)] += 1
+                    counter[min(worker1, worker2), max(worker1, worker2)] += 1
         # 3. the requests
         request_queue = []
         memory_size = 1

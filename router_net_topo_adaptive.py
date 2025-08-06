@@ -119,26 +119,26 @@ class RouterNetTopoAdaptive(RouterNetTopo):
         graph.add_weighted_edges_from(costs.values())
         self.graph = graph
 
-        for src in self.nodes[self.QUANTUM_ROUTER]:
-            for dst_name in graph.nodes:
-                if src.name == dst_name:
-                    continue
-                try:
-                    if dst_name > src.name:
-                        length, path = single_source_dijkstra(graph, src.name, dst_name)
-                    else:
-                        length, path = single_source_dijkstra(graph, dst_name, src.name)
-                        path = path[::-1]
-                    # update all_paths
-                    hop_count = len(path) - 2
-                    all_paths[(src.name, dst_name)] = (length, hop_count, tuple(path))
+        # for src in self.nodes[self.QUANTUM_ROUTER]:
+        #     for dst_name in graph.nodes:
+        #         if src.name == dst_name:
+        #             continue
+        #         try:
+        #             if dst_name > src.name:
+        #                 length, path = single_source_dijkstra(graph, src.name, dst_name)
+        #             else:
+        #                 length, path = single_source_dijkstra(graph, dst_name, src.name)
+        #                 path = path[::-1]
+        #             # update all_paths
+        #             hop_count = len(path) - 2
+        #             all_paths[(src.name, dst_name)] = (length, hop_count, tuple(path))
                     
-                    next_hop = path[1]
-                    # routing protocol locates at the bottom of the stack
-                    routing_protocol = src.network_manager.protocol_stack[0]  # guarantee that [0] is the routing protocol
-                    routing_protocol.add_forwarding_rule(dst_name, next_hop)
-                except exception.NetworkXNoPath:
-                    pass
+        #             next_hop = path[1]
+        #             # routing protocol locates at the bottom of the stack
+        #             routing_protocol = src.network_manager.protocol_stack[0]  # guarantee that [0] is the routing protocol
+        #             routing_protocol.add_forwarding_rule(dst_name, next_hop)
+        #         except exception.NetworkXNoPath:
+        #             pass
         
         # update the classical delay and the distance
         def classical_delay(distance: float, hop_count: int) -> float:
@@ -175,3 +175,5 @@ class RouterNetTopoAdaptive(RouterNetTopo):
             assert len(controller_list) == 1, 'There should be one and only one controller'
             controller = controller_list[0]
             controller.graph = self.graph
+            # create a event to let the controller compute all the forwarding rules
+            # controller.

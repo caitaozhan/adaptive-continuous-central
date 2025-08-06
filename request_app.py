@@ -166,6 +166,9 @@ class RequestAppTimeToServe(RequestApp):
             request = msg.request  #  (src name, dst name, start time, end time, memory size, fidelity, entanglement number)
             responder, start_t, end_t, memo_size, fidelity, entanglement_number = request[1], request[2], request[3], request[4], request[5], request[6]
             self.start(responder, start_t, end_t, memo_size, fidelity, entanglement_number, msg.request_counter)
+        
+        if msg.msg_type is NetControllerMsgType.FORWARDING_TABLE:
+            self.node.network_manager.update_forwarding_table(msg.forwarding_table)
 
     def start(self, responder: str, start_t: int, end_t: int, memo_size: int, fidelity: float, entanglement_number: int = 1, id: int = 0):
         """Method to start the application.

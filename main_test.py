@@ -3,13 +3,10 @@ Implement the paper titled "Adaptive, Continuous Entanglement Generation for Qua
 in SeQUeNCe and conduct experiments with a large number of nodes.
 '''
 
-import logging
-import argparse
 from collections import defaultdict
 import numpy as np
 from sequence.topology.router_net_topo import RouterNetTopo
-from sequence.constants import MILLISECOND
-from sequence.constants import SECOND
+from sequence.constants import MILLISECOND, SECOND
 import sequence.utils.log as log
 from request_app import RequestAppThroughput, RequestAppTimeToServe
 from router_net_topo_adaptive import RouterNetTopoAdaptive
@@ -639,9 +636,8 @@ def app_10_node_random_request2_dqc():
     log.set_logger(__name__, tl, log_filename)
     # log.set_logger_level('DEBUG')
     log.set_logger_level('INFO')
-    # modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test']
-    modules = ['main_test']
-    # modules = ['main_test']
+    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test', 'routing']
+    # modules = ['main_test', 'routing']
     for module in modules:
         log.track_module(module)
 
@@ -664,7 +660,7 @@ def app_10_node_random_request2_dqc():
 
     controller.dqc_server.num_qubit_per_worker = 4
     queue_length = 10
-    num_qubits_lower = 10
+    num_qubits_lower = 5
     num_qubits_upper = 11
     start_time = 0.1
     app_period = REQUEST_PERIOD
