@@ -10,6 +10,7 @@ Args:
     cc_delay (float): classical channel delay (in ms).
 
 Optional Args:
+    -f --formalism (str): the formalism of the quantum state. Options: ket_vector, density_matrix, bell_diagonal
     -o --output (str): name of the output file (default out.json).
     -s --stop (float): simulation stop time (in s) (default infinity).
     -p --parallel: sets simulation as parallel and requires addition args:
@@ -167,16 +168,16 @@ def random_network():
         # cchannels
         cchannels.append({Topology.SRC: node1_name,
                           Topology.DST: bsm_name,
-                          Topology.DELAY: args.cc_delay * 1e9})
+                          Topology.DELAY: int(args.cc_delay * MILLISECOND)})
         cchannels.append({Topology.SRC: node2_name,
                           Topology.DST: bsm_name,
-                          Topology.DELAY: args.cc_delay * 1e9})
+                          Topology.DELAY: int(args.cc_delay * MILLISECOND)})
         cchannels.append({Topology.SRC: bsm_name,
                           Topology.DST: node1_name,
-                          Topology.DELAY: args.cc_delay * 1e9})
+                          Topology.DELAY: int(args.cc_delay * MILLISECOND)})
         cchannels.append({Topology.SRC: bsm_name,
                           Topology.DST: node2_name,
-                          Topology.DELAY: args.cc_delay * 1e9})
+                          Topology.DELAY: int(args.cc_delay * MILLISECOND)})
         seed += 1
 
     # 1.3 generate the controller node
@@ -191,10 +192,10 @@ def random_network():
         for node2_name in router_names[i+1:]:
             cchannels.append({Topology.SRC: node1_name,
                               Topology.DST: node2_name,
-                              Topology.DELAY: args.cc_delay * MILLISECOND})
+                              Topology.DELAY: int(args.cc_delay * MILLISECOND)})
             cchannels.append({Topology.SRC: node2_name,
                               Topology.DST: node1_name,
-                              Topology.DELAY: args.cc_delay * MILLISECOND})
+                              Topology.DELAY: int(args.cc_delay * MILLISECOND)})
 
     # 2.2 generate controller-to-router classical links
     controller2router_cchannels = []
@@ -202,11 +203,11 @@ def random_network():
         controller2router_cchannels.append({Topology.SRC: controller_name,
                                             Topology.DST: router_name,
                                             Topology.DISTANCE: args.qc_length * 1000,
-                                            Topology.DELAY: args.cc_delay * MILLISECOND})
+                                            Topology.DELAY: int(args.cc_delay * MILLISECOND)})
         controller2router_cchannels.append({Topology.SRC: router_name,
                                             Topology.DST: controller_name,
                                             Topology.DISTANCE: args.qc_length * 1000,
-                                            Topology.DELAY: args.cc_delay * MILLISECOND})
+                                            Topology.DELAY: int(args.cc_delay * MILLISECOND)})
     cchannels += controller2router_cchannels
 
     nodes += bsm_nodes
@@ -226,4 +227,4 @@ def random_network():
 if __name__ == '__main__':
     random_network()
 
-# python config/config_generator_random.py 10 10 0.1 0.0002 1 -d config -o random_10.json -s 10
+# python config/config_generator_random.py 10 10 0.1 0.0002 1 -d config -o random_10.json -s 10 -f bell_diagonal

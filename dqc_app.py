@@ -11,11 +11,11 @@ class DQC_APP:
     
     Attributes:
         monolithic_circuit (): the monolithic quantum circuit
-        start_time (float): the time when the application starts (in seconds)
-        end_time (float): the time when the application ends (in seconds)
+        start_time (int): the time when the application starts (in picoseconds)
+        end_time (int): the time when the application ends (in picoseconds)
         result (): circuit result
     '''
-    def __init__(self, start_time: float, end_time: float):
+    def __init__(self, start_time: int, end_time: int):
         self.monolithic_circuit = None
         self.start_time = start_time
         self.end_time = end_time
@@ -48,7 +48,7 @@ class DQC_APP_Queue:
         queue = []
         cur_time = start_time
         for _ in range(length):
-            dqc_app = DQC_APP(start_time=cur_time * SECOND, end_time=(cur_time + app_period) * SECOND)
+            dqc_app = DQC_APP(start_time=int(cur_time * SECOND), end_time=int((cur_time + app_period) * SECOND))
             num_qubits = np.random.randint(num_qubits_lower, num_qubits_upper)
             dqc_app.quantum_fourier_transform(num_qubits, swapping=False, to_cnot=False)
             queue.append(dqc_app)

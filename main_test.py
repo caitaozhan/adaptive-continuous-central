@@ -634,9 +634,9 @@ def app_10_node_random_request2_dqc():
     tl = network_topo.get_timeline()
 
     log.set_logger(__name__, tl, log_filename)
-    # log.set_logger_level('DEBUG')
-    log.set_logger_level('INFO')
-    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test', 'routing']
+    log.set_logger_level('DEBUG')
+    # log.set_logger_level('INFO')
+    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test', 'routing', 'generation', 'bsm']
     # modules = ['main_test', 'routing']
     for module in modules:
         log.track_module(module)
@@ -659,7 +659,7 @@ def app_10_node_random_request2_dqc():
         break
 
     controller.dqc_server.num_qubit_per_worker = 4
-    queue_length = 10
+    queue_length = 3
     num_qubits_lower = 5
     num_qubits_upper = 11
     start_time = 0.1

@@ -55,14 +55,19 @@ class NetworkController(Protocol):
          1) sending entanglement requests to the workers and receiving responses.
          2) computing the forwarding table for each quantum node/worker
 
-         The network controller has access to the global topology via the controller.
+        The network controller has access to the global topology via the controller.
 
+        Attributes:
+            owner (Controller): the owner controller
+            name (str): the name of the network controller
+            request_counter (int): the request counter
+            entanglement_routing_time (int): the time reserved for entanglement routing, assume the entanglement routing completes before the App's start time
     """
     def __init__(self, owner: "Controller"):
         self.owner = owner
-        self.name = owner.name + '.network_controller'
-        self.request_counter = 0
-        self.entanglement_routing_time = 0.01 * SECOND  # Time for entanglement routing
+        self.name: str = owner.name + '.network_controller'
+        self.request_counter: int = 0
+        self.entanglement_routing_time: int = int(0.01 * SECOND)  # Time for entanglement routing
 
     def init(self):
         """Initialize the network controller with the graph topology

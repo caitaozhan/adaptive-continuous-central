@@ -5,8 +5,6 @@ import json
 from networkx import Graph, single_source_dijkstra, exception
 from sequence.topology.topology import Topology as Topo
 from sequence.topology.router_net_topo import RouterNetTopo
-from sequence.kernel.timeline import Timeline
-from sequence.kernel.quantum_manager import BELL_DIAGONAL_STATE_FORMALISM
 from sequence.constants import SPEED_OF_LIGHT, MICROSECOND
 
 from node import QuantumRouterAdaptiveWorker, BSMNodeAdaptive
@@ -75,9 +73,6 @@ class RouterNetTopoAdaptive(RouterNetTopo):
             node_obj.set_seed(seed)
             self.nodes[node_type].append(node_obj)
 
-        if self.encoding_type == "single_heralded":
-            self.tl.set_quantum_manager(BELL_DIAGONAL_STATE_FORMALISM)
-
 
     def _generate_forwarding_table(self, config: dict):
         """For static routing.
@@ -141,10 +136,10 @@ class RouterNetTopoAdaptive(RouterNetTopo):
         #             pass
         
         # update the classical delay and the distance
-        def classical_delay(distance: float, hop_count: int) -> float:
+        def classical_delay(distance: float, hop_count: int) -> int:
             """Model the classical delay as a function of distance and hop count
             """
-            return distance / SPEED_OF_LIGHT + hop_count * 20 * MICROSECOND + 100 * MICROSECOND
+            return int(distance / SPEED_OF_LIGHT + hop_count * 20 * MICROSECOND + 100 * MICROSECOND)
 
         for cc in self.cchannels:
             src = cc.sender.name
