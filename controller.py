@@ -48,7 +48,6 @@ class Controller(ClassicalNode):
         all_forwarding_tables = self.network_controller.compute_forwarding_table_for_all_nodes(self.graph)
         self.network_controller.send_forwarding_table_to_all_nodes(all_forwarding_tables)
 
-
     def set_seed(self, seed: int) -> None:
         """Set the seed, also set the generator
         

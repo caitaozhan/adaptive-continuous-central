@@ -628,7 +628,6 @@ def app_10_node_random_request2_dqc():
     log_filename = 'log/tmp/random10,numqubit=14'
     
     network_config = 'config/random_10.json'
-
     network_topo = RouterNetTopoAdaptive(network_config)
     
     tl = network_topo.get_timeline()
@@ -659,7 +658,7 @@ def app_10_node_random_request2_dqc():
         break
 
     controller.dqc_server.num_qubit_per_worker = 4
-    queue_length = 3
+    queue_length = 1
     num_qubits_lower = 5
     num_qubits_upper = 11
     start_time = 0.1
@@ -690,8 +689,11 @@ def app_10_node_random_request2_dqc():
         fidelity_dict |= app.entanglement_fidelities
 
     for reservation, time_to_serve in sorted(time_to_serve_dict.items()):
-        fidelity = fidelity_dict[reservation][0]
-        log.logger.info(f'reservation={reservation}, time to serve={time_to_serve / MILLISECOND}, fidelity={fidelity:.6f}')
+        fidelities = fidelity_dict[reservation]
+        fidelity = np.average(fidelities)
+        tts = time_to_serve / MILLISECOND
+        avg_ep = tts / reservation.entanglement_number
+        log.logger.info(f'reservation={reservation}, time to serve request={tts:.4f}, avg ep latency={avg_ep:.4f}, avg fidelity={fidelity:.4f}')
 
 
 

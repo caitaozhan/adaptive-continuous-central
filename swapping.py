@@ -172,7 +172,7 @@ class EntanglementSwappingA_bds(EntanglementProtocol):
             List[float]: resultant bell diagonal state entries.
         """
 
-        assert self.owner.timeline.quantum_manager.formalism == BELL_DIAGONAL_STATE_FORMALISM, \
+        assert self.owner.timeline.quantum_manager.get_active_formalism() == BELL_DIAGONAL_STATE_FORMALISM, \
             "Input states should be Bell diagonal states."
 
         left_state = self.owner.timeline.quantum_manager.get(self.left_memo.qstate_key)
