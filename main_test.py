@@ -13,6 +13,7 @@ from router_net_topo_adaptive import RouterNetTopoAdaptive
 from traffic import TrafficMatrix
 from dqc_app import DQC_APP_Queue
 from controller import Controller
+from breaking_link import BreakingLink
 
 
 # linear network topology + entanglement generation (based on 20 samples)
@@ -640,6 +641,8 @@ def app_10_node_random_request2_dqc():
     for module in modules:
         log.track_module(module)
 
+    breaking_link = BreakingLink('breaking_link', tl, network_topo.get_qchannels(), network_topo.get_cchannels())
+
     name_to_apps = {}
     for router in network_topo.get_nodes_by_type(RouterNetTopo.QUANTUM_ROUTER):
         app = RequestAppTimeToServe(router)
@@ -666,6 +669,9 @@ def app_10_node_random_request2_dqc():
     dqc_app_queue = DQC_APP_Queue.generate_random_queue(queue_length, num_qubits_lower, num_qubits_upper, start_time, app_period)
     controller.dqc_server.load(dqc_app_queue)
     controller.dqc_server.generate_network_request()
+
+    breaking_link_queue = [(0.5*MILLISECOND, 'router_9', 'router_1')]
+    breaking_link.load(breaking_link_queue)
 
     # num_nodes = len(name_to_apps)
     # traffic_matrix = TrafficMatrix(num_nodes)

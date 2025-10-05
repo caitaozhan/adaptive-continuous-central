@@ -17,14 +17,6 @@ Optional Args:
     -d --directory (str): name of the output directory (default tmp)
     -o --output (str): name of the output file (default out.json).
     -s --stop (float): simulation stop time (in s) (default infinity).
-    -p --parallel: sets simulation as parallel and requires addition args:
-        server ip (str): IP address of quantum manager server.
-        server port (int): port quantum manager server is attached to.
-        num. processes (int): number of processes to use for simulation.
-        sync/async (bool): denotes if timelines should be synchronous (true) or not (false).
-        lookahead (int): simulation lookahead time for timelines (in ps).
-    -n --nodes (str): path to csv file providing process information for nodes.
-
     
 python config/config_generator_bottleneck.py 4 4 10 5 1 0.0002 1 -d config -o bottleneck_10.json -s 100
 python config/draw_topo.py config/bottleneck_10.json -d config -f bottleneck_10 -m
@@ -35,7 +27,7 @@ import argparse
 import json
 import os
 
-from sequence.utils.config_generator import get_node_csv, generate_node_procs, generate_nodes, generate_classical, final_config, router_name_func
+from sequence.utils.config_generator import generate_nodes, generate_classical, final_config, router_name_func
 from sequence.topology.topology import Topology
 from sequence.topology.router_net_topo import RouterNetTopo
 
@@ -52,8 +44,6 @@ parser.add_argument('cc_delay', type=float, help='classical channel delay (in ms
 parser.add_argument('-d', '--directory', type=str, default='tmp', help='name of output directory')
 parser.add_argument('-o', '--output', type=str, default='out.json', help='name of output config file')
 parser.add_argument('-s', '--stop', type=float, default=float('inf'), help='stop time (in s)')
-parser.add_argument('-p', '--parallel', nargs=4, help='optional parallel arguments: server ip, server port, num. processes, lookahead')
-parser.add_argument('-n', '--nodes', type=str, help='path to csv file to provide process for each node')
 
 args = parser.parse_args()
 
@@ -88,30 +78,19 @@ output_dict[Topology.ALL_TEMPLATES] = \
         }
     }
 
-# get csv file (if present) and node names
-if args.nodes:
-    node_procs = get_node_csv(args.nodes)
-    # assume center node is last listed
-    center_name = list(node_procs.keys())[-1]
-else:
-    node_procs = generate_node_procs(args.parallel, net_size, router_name_func)
-    # rename bottleneck router
-    # center_name = "router_center"
-    # proc = node_procs[router_name_func(args.star_size)]
-    # del node_procs[router_name_func(args.star_size)]
-    # node_procs[center_name] = proc
-router_names = list(node_procs.keys())
 
+
+router_names = [router_name_func(i) for i in range(net_size)]
 bottleneck_left_name  = f'router_{args.left_size}'
 bottleneck_right_name = f'router_{args.left_size + 1}'
 
 # generate nodes, with middle having different num
 template = 'adaptive_protocol'
-nodes = generate_nodes(node_procs, router_names, args.memo_size_side, template)
+nodes = generate_nodes(router_names, args.memo_size_side, template)
 for node in nodes:
     if node[Topology.NAME] == bottleneck_left_name or node[Topology.NAME] == bottleneck_right_name:
         node[RouterNetTopo.MEMO_ARRAY_SIZE] = args.memo_size_bottleneck
-        
+
 channels = [] # [(left node, bsm, right node), ...]
 
 # generate quantum links
@@ -141,10 +120,6 @@ bsm_nodes = [{Topology.NAME: bsm_name,
               Topology.SEED: i,
               RouterNetTopo.TEMPLATE: template}
               for i, bsm_name in enumerate(bsm_names)]
-
-if args.parallel:
-    for i in range(args.star_size):
-        bsm_nodes[i][RouterNetTopo.GROUP] = nodes[i][RouterNetTopo.GROUP]
 
 for left_node_name, bsm_name, right_node_name in channels:
     # qchannels

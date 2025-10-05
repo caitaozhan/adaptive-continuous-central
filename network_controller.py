@@ -21,9 +21,11 @@ if TYPE_CHECKING:
 class NetControllerMsgType(Enum):
     """Defines possible message types between the network controller (at the centralized controller) and the application (at the node/worker)
     """
-    REQUEST = auto()   # request a worker to start EP generation
-    RESPOND = auto()   # worker finish the EP generation and respond to the network controller
-    FORWARDING_TABLE = auto()  # forwarding table for the worker
+    CONTROLLER = auto()        # controller --> worker, initialize the network controller at the worker
+    REQUEST = auto()           # controller --> worker, request a worker to start EP generation
+    RESPOND = auto()           # controller --> worker, worker finish the EP generation and respond to the network controller
+    FORWARDING_TABLE = auto()  # controller --> worker, forwarding table for the worker
+    BROKEN_QLINK = auto()      # worker --> controller, the quantum channels are broken in a link
 
 
 class NetControllerMessage(Message):
@@ -33,7 +35,10 @@ class NetControllerMessage(Message):
         super().__init__(msg_type, receiver=receiver)
         self.string = f'type={msg_type.name}, receiver={receiver}'
 
-        if self.msg_type == NetControllerMsgType.REQUEST:
+        if self.msg_type == NetControllerMsgType.CONTROLLER:
+            self.controller = kwargs['controller']
+            self.string += f', controller={self.controller}'
+        elif self.msg_type == NetControllerMsgType.REQUEST:
             self.request = kwargs['request']
             self.request_counter = kwargs['request_counter']
             self.string += f', request={self.request}, request_counter={self.request_counter}'
@@ -43,6 +48,9 @@ class NetControllerMessage(Message):
         elif self.msg_type == NetControllerMsgType.FORWARDING_TABLE:
             self.forwarding_table = kwargs['forwarding_table']
             self.string += f', forwarding_table={self.forwarding_table}'
+        elif self.msg_type is NetControllerMsgType.BROKEN_QLINK:
+            self.broken_qlink = kwargs['broken_qlink']  # (node1, node2)
+            self.string += f', broken_qlink={self.broken_qlink}'
 
     def __str__(self):
         return self.string
@@ -69,14 +77,15 @@ class NetworkController(Protocol):
         self.request_counter: int = 0
         self.entanglement_routing_time: int = int(0.01 * SECOND)  # Time for entanglement routing
 
-    def init(self):
-        """Initialize the network controller with the graph topology
+    def init(self, graph: Graph):
+        """Inform the quantum nodes/workers who is the network controller
+
         Args:
             graph (Graph): the graph topology of the network
         """
-        # self.graph = graph # TODO confirm the graph is the same as the one in the controller
-        # log.logger.info(f'{self.owner.name} initialized with graph: {self.graph}')
-        pass
+        for node in graph.nodes:
+            msg = NetControllerMessage(NetControllerMsgType.CONTROLLER, receiver='application', controller=self.owner.name)
+            self.owner.send_message(node, msg)
 
     def send_requests(self, requests: list[tuple]):
         """
@@ -97,7 +106,11 @@ class NetworkController(Protocol):
         """Received classical message from the workers
         """
         log.logger.debug(f'{self.owner.name} receive message from {src}: {msg}')
-         # TODO
+        if msg.msg_type is NetControllerMsgType.BROKEN_QLINK:
+            node1, node2 = msg.broken_qlink
+            # TODO: handle the broken quantum link
+            # all_forwarding_tables = self.compute_forwarding_table_for_all_nodes(self.owner.graph)
+            # self.send_forwarding_table_to_all_nodes(all_forwarding_tables)
 
     def compute_forwarding_table_for_all_nodes(self, graph: Graph) -> dict:
         """Compute the forwarding table for all quantum nodes/workers in the network
@@ -133,9 +146,8 @@ class NetworkController(Protocol):
         """
         log.logger.info(f'{self.name} send forwarding table to {node_name}')
         msg = NetControllerMessage(NetControllerMsgType.FORWARDING_TABLE, receiver='application', forwarding_table=forwarding_table)
-        process = Process(self.owner, 'send_message', [node_name, msg])
-        event = Event(self.owner.timeline.now(), process)
-        self.owner.timeline.schedule(event)
+        self.owner.send_message(node_name, msg)
+        
 
     def send_forwarding_table_to_all_nodes(self, all_forwarding_tables: dict):
         """Send the forwarding table to all quantum nodes/workers in the network

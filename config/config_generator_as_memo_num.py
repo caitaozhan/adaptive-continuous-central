@@ -69,87 +69,86 @@ def get_exp_dis_prob(x0, x1, alpha):
     return integral_func(x1, alpha) - integral_func(x0, alpha)
 
 
-def get_partition(graph, GROUP_NUM, node_memo_size):
-    net_size = len(graph.nodes)
+# def get_partition(graph, GROUP_NUM, node_memo_size):
+#     net_size = len(graph.nodes)
 
-    def energy_func_memory_number(reverse_map_group):
-        group_memo_num = []
-        for node in reverse_map_group:
-            group = reverse_map_group[node]
-            while group >= len(group_memo_num):
-                group_memo_num.append(0)
-            group_memo_num[group] += node_memo_size[node]
-        e = max(group_memo_num) - min(group_memo_num)
-        return e
+#     def energy_func_memory_number(reverse_map_group):
+#         group_memo_num = []
+#         for node in reverse_map_group:
+#             group = reverse_map_group[node]
+#             while group >= len(group_memo_num):
+#                 group_memo_num.append(0)
+#             group_memo_num[group] += node_memo_size[node]
+#         e = max(group_memo_num) - min(group_memo_num)
+#         return e
 
-    class State():
-        def __init__(self, group):
-            self.group = group
-            self.reverse_map_group = {}
-            for i, g in enumerate(self.group):
-                for n in g:
-                    self.reverse_map_group[n] = i
+#     class State():
+#         def __init__(self, group):
+#             self.group = group
+#             self.reverse_map_group = {}
+#             for i, g in enumerate(self.group):
+#                 for n in g:
+#                     self.reverse_map_group[n] = i
 
-        def get_energy(self):
-            return energy_func_memory_number(self.reverse_map_group)
+#         def get_energy(self):
+#             return energy_func_memory_number(self.reverse_map_group)
 
-        def move(self):
-            group = self.group
-            r_group = self.reverse_map_group
+#         def move(self):
+#             group = self.group
+#             r_group = self.reverse_map_group
 
-            g1, g2 = random.choices(list(range(len(group))), k=2)
-            index1, index2 = random.choices(list(range(len(group[g1]))), k=2)
-            n1, n2 = group[g1][index1], group[g2][index2]
+#             g1, g2 = random.choices(list(range(len(group))), k=2)
+#             index1, index2 = random.choices(list(range(len(group[g1]))), k=2)
+#             n1, n2 = group[g1][index1], group[g2][index2]
 
-            group[g1][index1], group[g2][index2] = n2, n1
-            r_group[group[g1][index1]] = g1
-            r_group[group[g2][index2]] = g2
+#             group[g1][index1], group[g2][index2] = n2, n1
+#             r_group[group[g1][index1]] = g1
+#             r_group[group[g2][index2]] = g2
 
-    class Partition(Annealer):
-        def move(self):
-            self.state.move()
+#     class Partition(Annealer):
+#         def move(self):
+#             self.state.move()
 
-        def energy(self):
-            return self.state.get_energy()
+#         def energy(self):
+#             return self.state.get_energy()
 
-    group = [[] for _ in range(GROUP_NUM)]
-    for i in range(net_size):
-        index = i // (net_size // GROUP_NUM)
-        group[index].append(router_name_func(i))
+#     group = [[] for _ in range(GROUP_NUM)]
+#     for i in range(net_size):
+#         index = i // (net_size // GROUP_NUM)
+#         group[index].append(router_name_func(i))
 
-    if GROUP_NUM == 1:
-        return group
+#     if GROUP_NUM == 1:
+#         return group
 
-    ini_state = State(group)
-    partition = Partition(ini_state)
-    auto_schedule = partition.auto(minutes=2)
+#     ini_state = State(group)
+#     partition = Partition(ini_state)
+#     auto_schedule = partition.auto(minutes=2)
 
-    partition.set_schedule(auto_schedule)
-    state, energy = partition.anneal()
-    return state.group
+#     partition.set_schedule(auto_schedule)
+#     state, energy = partition.anneal()
+#     return state.group
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('net_size', type=int, help="net_size (int) – Number of routers")
-parser.add_argument('seed', type=int, help="seed (int) – Indicator of random number generation state. ")
-parser.add_argument('group_n', type=int, help="group_n (int) - Number of groups for parallel simulation")
+parser.add_argument('net_size', type=int, help="net_size (int) - Number of routers")
+parser.add_argument('seed', type=int, help="seed (int) - Indicator of random number generation state. ")
 parser.add_argument('alpha', type=int, help="alpha for exponential distribution of flows")
 parser = add_default_args(parser)
 args = parser.parse_args()
 
 NET_SIZE = args.net_size
 NET_SEED = args.seed
-GROUP_NUM = args.group_n
+# GROUP_NUM = args.group_n
 ALPHA = args.alpha
 FLOW_MEMO_SIZE = args.memo_size
 QC_LEN = args.qc_length
 QC_ATT = args.qc_atten
 CC_DELAY = args.cc_delay
-if args.parallel:
-    IP = args.parallel[0]
-    PORT = int(args.parallel[1])
-    LOOKAHEAD = int(args.parallel[4])
-    assert int(args.parallel[2]) == GROUP_NUM
+# if args.parallel:
+#     IP = args.parallel[0]
+#     PORT = int(args.parallel[1])
+#     LOOKAHEAD = int(args.parallel[4])
+#     assert int(args.parallel[2]) == GROUP_NUM
 
 graph = nx.random_internet_as_graph(NET_SIZE, NET_SEED)
 paths = []
@@ -276,16 +275,16 @@ output_dict[Topology.ALL_TEMPLATES] = \
 
 node_procs = {}
 
-if args.nodes:
-    # TODO: add length/proc assertions
-    df = pd.read_csv(args.nodes)
-    for name, group in zip(df['name'], df['group']):
-        node_procs[name] = group
-else:
-    groups = get_partition(graph, int(GROUP_NUM), node_memo_size)
-    for i, g in enumerate(groups):
-        for name in g:
-            node_procs[name] = i
+# if args.nodes:
+#     # TODO: add length/proc assertions
+#     df = pd.read_csv(args.nodes)
+#     for name, group in zip(df['name'], df['group']):
+#         node_procs[name] = group
+# else:
+#     groups = get_partition(graph, int(GROUP_NUM), node_memo_size)
+#     for i, g in enumerate(groups):
+#         for name in g:
+#             node_procs[name] = i
 
 template = 'adaptive_protocol'
 
@@ -294,7 +293,6 @@ nodes = [{Topology.NAME: name,
           Topology.TYPE: RouterNetTopo.QUANTUM_ROUTER,
           Topology.SEED: i,
           RouterNetTopo.MEMO_ARRAY_SIZE: node_memo_size[name],
-          RouterNetTopo.GROUP: node_procs[name],
           RouterNetTopo.TEMPLATE: template}
          for i, name in enumerate(router_names)]
 

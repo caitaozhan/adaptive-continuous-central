@@ -28,10 +28,10 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
         adaptive_name = f'{self.name}.adaptive_continuous'
         adaptive_max_memory = component_templates['adaptive_max_memory']
         resource_reservation = self.network_manager.protocol_stack[-1]  # reference to the network manager's resource reservation protocol
-        # self.adaptive_continuous = AdaptiveContinuousProtocol(self, adaptive_name, adaptive_max_memory, resource_reservation)
         self.adaptive_continuous = AdaptiveContinuousWorker(self, adaptive_name, adaptive_max_memory, resource_reservation)
         self.active = True
         self.seed = seed
+        self.controller = None  # the controller of the network, will be set when the controller sends the forwarding table
 
     def init_managers(self, memo_arr_name: str):
         '''override QuantumRouter.init_manager()
@@ -61,7 +61,7 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
             self.adaptive_continuous.init()
             self.adaptive_continuous.start_delay(delay=0)
 
-    def receive_message(self, src: str, msg: "Message") -> None:
+    def received_message(self, src: str, msg: "Message") -> None:
         """Determine what to do when a message is received, based on the msg.receiver
         Args:
             src (str): name of node that sends the message
@@ -105,6 +105,17 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
     def get_seed(self) -> int:
         """Get the seed"""
         return self.seed
+
+    def noticed_broken_quantum_link(self, node1: str, node2: str) -> None:
+        """Noticed the quantum channels in the node1-node2 link are broken
+           The node will inform the controller of the broken link
+
+        Args:
+            node1 (str): name of one end node of the link
+            node2 (str): name of the other end node of the link
+        """
+        log.logger.info(f'{self.name} noticed broken quantum link between {node1} and {node2}')
+        self.app.inform_broken_link_to_controller(node1, node2)
 
 
 class QuantumRouterAdaptive(QuantumRouter):
@@ -150,7 +161,7 @@ class QuantumRouterAdaptive(QuantumRouter):
             self.adaptive_continuous.init()
             self.adaptive_continuous.start_delay(delay=0)
 
-    def receive_message(self, src: str, msg: "Message") -> None:
+    def received_message(self, src: str, msg: "Message") -> None:
         """Determine what to do when a message is received, based on the msg.receiver
         Args:
             src (str): name of node that sends the message

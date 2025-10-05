@@ -41,10 +41,7 @@ class Controller(ClassicalNode):
     def init(self) -> None:
         """override init method
         """
-        # self.adaptive_continuous.init(self.graph, self.traffic)
-        # self.adaptive_continuous.init_prob_tables()
-        # self.adaptive_continuous.send_probability_table()
-        self.network_controller.init()
+        self.network_controller.init(self.graph)
         all_forwarding_tables = self.network_controller.compute_forwarding_table_for_all_nodes(self.graph)
         self.network_controller.send_forwarding_table_to_all_nodes(all_forwarding_tables)
 
@@ -82,6 +79,6 @@ class Controller(ClassicalNode):
         '''
         log.logger.info(f'{self.name} receive message {msg} from {src}')
         if msg.receiver == 'network_controller':
-            self.network_controller.received_message(msg)
+            self.network_controller.received_message(src, msg)
         else:
             raise Exception(f'receiver {msg.receiver} not supported')

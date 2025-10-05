@@ -13,13 +13,6 @@ Optional Args:
     -f --formalism (str): the formalism of the quantum state. Options: ket_vector, density_matrix, bell_diagonal
     -o --output (str): name of the output file (default out.json).
     -s --stop (float): simulation stop time (in s) (default infinity).
-    -p --parallel: sets simulation as parallel and requires addition args:
-        server ip (str): IP address of quantum manager server.
-        server port (int): port quantum manager server is attached to.
-        num. processes (int): number of processes to use for simulation.
-        sync/async (bool): denotes if timelines should be synchronous (true) or not (false).
-        lookahead (int): simulation lookahead time for timelines (in ps).
-    -n --nodes (str): path to csv file providing process information for nodes.
 """
 
 import argparse
@@ -30,7 +23,7 @@ import random
 from networkx.generators.geometric import waxman_graph
 from typing import Tuple
 
-from sequence.utils.config_generator import add_default_args, get_node_csv, generate_node_procs, generate_nodes, final_config, router_name_func
+from sequence.utils.config_generator import add_default_args, generate_nodes, final_config, router_name_func
 from sequence.topology.topology import Topology
 from sequence.topology.router_net_topo import RouterNetTopo
 from sequence.constants import MILLISECOND
@@ -128,12 +121,8 @@ def random_network():
     V, E = create_random_waxman(area_length, net_size, edge_density)
 
     # 1.1 generate nodes
-    if args.nodes:
-        node_procs = get_node_csv(args.nodes)
-    else:
-        node_procs = generate_node_procs(args.parallel, args.net_size, router_name_func)
-    router_names = list(node_procs.keys())
-    nodes = generate_nodes(node_procs, router_names, args.memo_size, template)
+    router_names = [router_name_func(i) for i in range(net_size)]
+    nodes = generate_nodes(router_names, args.memo_size, template)
 
     # 1.2 generate quantum links and bsm nodes
     qchannels = []
@@ -152,7 +141,6 @@ def random_network():
         bsm_node = {Topology.NAME: bsm_name,
                     Topology.TYPE: RouterNetTopo.BSM_NODE,
                     Topology.SEED: seed,
-                    RouterNetTopo.GROUP: node_procs[node1_name],
                     RouterNetTopo.TEMPLATE: template}
         bsm_nodes.append(bsm_node)
 

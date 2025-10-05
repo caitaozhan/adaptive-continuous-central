@@ -170,6 +170,9 @@ class RequestAppTimeToServe(RequestApp):
         if msg.msg_type is NetControllerMsgType.FORWARDING_TABLE:
             self.node.network_manager.update_forwarding_table(msg.forwarding_table)
 
+        if msg.msg_type is NetControllerMsgType.CONTROLLER:
+            self.node.controller = msg.controller
+
     def start(self, responder: str, start_t: int, end_t: int, memo_size: int, fidelity: float, entanglement_number: int = 1, id: int = 0):
         """Method to start the application.
 
@@ -306,6 +309,7 @@ class RequestAppTimeToServe(RequestApp):
                 # NOTE: shouldn't be AC Protocol's job. It should be resource manager's job
                 # I am letting the AC Protocol sending expire msm because I don't want to add a new message type to Resource Manager and make changes
 
+
     def get_request_to_throughput(self) -> dict:
         '''each request maps to a reservation
         Return:
@@ -316,3 +320,17 @@ class RequestAppTimeToServe(RequestApp):
             time_elapse = (reservation.end_time - reservation.start_time) / SECOND
             request_to_throughput[reservation] = len(entanglement_timestamps) / time_elapse
         return request_to_throughput
+
+
+    def inform_broken_link_to_controller(self, node1: str, node2: str):
+        '''inform the controller the broken link
+
+        Args:
+            node1 (str): one end of the broken link
+            node2 (str): the other end of the broken link
+        '''
+        if self.node.controller is not None:
+            msg = NetControllerMessage(NetControllerMsgType.BROKEN_QLINK, 'network_controller', broken_qlink=(node1, node2))
+            self.node.send_message(self.node.controller, msg)
+        else:
+            log.logger.warning(f'{self.node.name} cannot inform the controller the broken link between {node1} and {node2}, because it does not know who is the controller')
