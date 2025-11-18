@@ -625,8 +625,8 @@ def app_10_node_random_request2_dqc():
 
     purify = False
     strategy = 'freshest'
-    # log_filename = f'log/queue_tts/line2,ma=1,up=False,{strategy},pf={purify}'
-    log_filename = 'log/tmp/random10,numqubit=14'
+    log_filename = 'log/tmp/random10,numqubit=10'
+    # log_filename = 'tmp/log/random10,numqubit=10,breaking_1-9'
     
     network_config = 'config/random_10.json'
     network_topo = RouterNetTopoAdaptive(network_config)
@@ -636,12 +636,10 @@ def app_10_node_random_request2_dqc():
     log.set_logger(__name__, tl, log_filename)
     log.set_logger_level('DEBUG')
     # log.set_logger_level('INFO')
-    modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test', 'routing', 'generation', 'bsm']
-    # modules = ['main_test', 'routing']
+    # modules = ['controller', 'network_controller', 'node', 'timeline',  'main_test', 'routing', 'generation']
+    modules = ['main_test']
     for module in modules:
         log.track_module(module)
-
-    breaking_link = BreakingLink('breaking_link', tl, network_topo.get_qchannels(), network_topo.get_cchannels())
 
     name_to_apps = {}
     for router in network_topo.get_nodes_by_type(RouterNetTopo.QUANTUM_ROUTER):
@@ -661,8 +659,8 @@ def app_10_node_random_request2_dqc():
         break
 
     controller.dqc_server.num_qubit_per_worker = 4
-    queue_length = 1
-    num_qubits_lower = 5
+    queue_length = 10
+    num_qubits_lower = 10
     num_qubits_upper = 11
     start_time = 0.1
     app_period = REQUEST_PERIOD
@@ -670,8 +668,9 @@ def app_10_node_random_request2_dqc():
     controller.dqc_server.load(dqc_app_queue)
     controller.dqc_server.generate_network_request()
 
-    breaking_link_queue = [(0.5*MILLISECOND, 'router_9', 'router_1')]
-    breaking_link.load(breaking_link_queue)
+    # breaking_link = BreakingLink('breaking_link', tl, network_topo.get_qchannels(), network_topo.get_cchannels())
+    # breaking_link_queue = [(0.5*MILLISECOND, 'router_9', 'router_1')]
+    # breaking_link.load(breaking_link_queue)
 
     # num_nodes = len(name_to_apps)
     # traffic_matrix = TrafficMatrix(num_nodes)
@@ -699,7 +698,7 @@ def app_10_node_random_request2_dqc():
         fidelity = np.average(fidelities)
         tts = time_to_serve / MILLISECOND
         avg_ep = tts / reservation.entanglement_number
-        log.logger.info(f'reservation={reservation}, time to serve request={tts:.4f}, avg ep latency={avg_ep:.4f}, avg fidelity={fidelity:.4f}')
+        log.logger.info(f'reservation={reservation}, time_to_serve={tts:.4f}, avg_ep_latency={avg_ep:.4f}, avg_fidelity={fidelity:.4f}')
 
 
 

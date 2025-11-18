@@ -2,8 +2,9 @@
    and talk to the workers about the requests
 """
 
+from collections import defaultdict
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, DefaultDict
 from networkx import Graph, dijkstra_path
 from sequence.message import Message
 from sequence.kernel.event import Event
@@ -70,12 +71,15 @@ class NetworkController(Protocol):
             name (str): the name of the network controller
             request_counter (int): the request counter
             entanglement_routing_time (int): the time reserved for entanglement routing, assume the entanglement routing completes before the App's start time
+            graph (Graph): the graph topology of the network
     """
     def __init__(self, owner: "Controller"):
         self.owner = owner
         self.name: str = owner.name + '.network_controller'
         self.request_counter: int = 0
         self.entanglement_routing_time: int = int(0.01 * SECOND)  # Time for entanglement routing
+        self.graph: Graph = None
+        self.broken_qlinks: DefaultDict[tuple, list] = defaultdict(list)  # record the broken quantum links, key is the link, value is a list of nodes
 
     def init(self, graph: Graph):
         """Inform the quantum nodes/workers who is the network controller
@@ -83,6 +87,7 @@ class NetworkController(Protocol):
         Args:
             graph (Graph): the graph topology of the network
         """
+        self.graph = graph
         for node in graph.nodes:
             msg = NetControllerMessage(NetControllerMsgType.CONTROLLER, receiver='application', controller=self.owner.name)
             self.owner.send_message(node, msg)
@@ -108,11 +113,16 @@ class NetworkController(Protocol):
         log.logger.debug(f'{self.owner.name} receive message from {src}: {msg}')
         if msg.msg_type is NetControllerMsgType.BROKEN_QLINK:
             node1, node2 = msg.broken_qlink
-            # TODO: handle the broken quantum link
-            # all_forwarding_tables = self.compute_forwarding_table_for_all_nodes(self.owner.graph)
-            # self.send_forwarding_table_to_all_nodes(all_forwarding_tables)
+            self.broken_qlinks[(node1, node2)].append(src)
+            broken_qlink = self.broken_qlinks[(node1, node2)]
+            if set([node1, node2]) == set(broken_qlink):  # both sides report the broken link
+                self.graph.remove_edge(node1, node2)
+                all_forwarding_tables = self.compute_forwarding_table_for_all_nodes()
+                self.send_forwarding_table_to_all_nodes(all_forwarding_tables)
+                self.broken_qlinks.pop((node1, node2))
 
-    def compute_forwarding_table_for_all_nodes(self, graph: Graph) -> dict:
+
+    def compute_forwarding_table_for_all_nodes(self) -> dict:
         """Compute the forwarding table for all quantum nodes/workers in the network
         
         Args:
@@ -123,15 +133,15 @@ class NetworkController(Protocol):
         """ 
         log.logger.info(f'{self.owner.name} compute forwarding table for all nodes')
         all_forwarding_tables = {}
-        for src in graph.nodes:
+        for src in self.graph.nodes:
             all_forwarding_tables[src] = {}
-            for dst in graph.nodes:
+            for dst in self.graph.nodes:
                 if src == dst:
                     continue
                 elif dst > src:
-                    path = dijkstra_path(graph, src, dst)
+                    path = dijkstra_path(self.graph, src, dst)
                 else: # src > dst
-                    path = dijkstra_path(graph, dst, src)[::-1]
+                    path = dijkstra_path(self.graph, dst, src)[::-1]
                 next_hop = path[1]
                 all_forwarding_tables[src][dst] = next_hop
         return all_forwarding_tables

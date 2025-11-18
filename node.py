@@ -61,7 +61,7 @@ class QuantumRouterAdaptiveWorker(QuantumRouter):
             self.adaptive_continuous.init()
             self.adaptive_continuous.start_delay(delay=0)
 
-    def received_message(self, src: str, msg: "Message") -> None:
+    def receive_message(self, src: str, msg: "Message") -> None:
         """Determine what to do when a message is received, based on the msg.receiver
         Args:
             src (str): name of node that sends the message
