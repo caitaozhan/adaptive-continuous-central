@@ -27,6 +27,7 @@ class Controller(ClassicalNode):
         adaptive_continuous_controller (AdaptiveContinuousController): the centralized controller
         graph (Graph): the graph topology of the network
         traffic (list): the traffic pattern, consist a list of (matrix, start_time, end_time)
+        routing (bool): if yes, centralized routing; if no, decentralized routing
     """
     def __init__(self, name: str, timeline: Timeline, seed: int):
         super().__init__(name, timeline)
@@ -37,13 +38,15 @@ class Controller(ClassicalNode):
         self.adaptive_continuous = AdaptiveContinuousController(self, f'{name}.acp')
         self.dqc_server: DQC_APP_Server = DQC_APP_Server(self)
         self.network_controller = NetworkController(self)
+        self.routing: bool = True  # if true, centralized routing; if false, decentralized routing
 
     def init(self) -> None:
         """override init method
         """
         self.network_controller.init(self.graph)
-        all_forwarding_tables = self.network_controller.compute_forwarding_table_for_all_nodes()
-        self.network_controller.send_forwarding_table_to_all_nodes(all_forwarding_tables)
+        if self.routing:
+            all_forwarding_tables = self.network_controller.compute_forwarding_table_for_all_nodes()
+            self.network_controller.send_forwarding_table_to_all_nodes(all_forwarding_tables)
 
     def set_seed(self, seed: int) -> None:
         """Set the seed, also set the generator

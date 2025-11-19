@@ -103,6 +103,8 @@ class RouterNetTopoAdaptive(RouterNetTopo):
         graph.add_weighted_edges_from(costs.values())
         self.graph = graph
 
+        # The routing is moved from the topology class to the centralized controller or distributed nodes
+        # 
         # for src in self.nodes[self.QUANTUM_ROUTER]:
         #     for dst_name in graph.nodes:
         #         if src.name == dst_name:
